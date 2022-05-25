@@ -1,82 +1,52 @@
+#include <fstream>
+#include <iterator>
+#include <algorithm>
+#include <vector>
 #include <iostream>
-
+#include <cstring>
 using namespace std;
 
+void matmul(double* matrixA, double* matrixB, double* matrixC, int numARow, int numACol);
+void addBias(double* matrix, double* bias, int count);
+int readFileToBuffer(char* filename, double* buffer);
 
-struct DrapeResult {
-    double T_vertices[1];
-    double T_cloth_vertices[1];
-    double vertices[1];
-    double cloth_vertices[1]
-};
+#define NUM_LAYER 4
 
 int main() {
 
+    double* layerWeights[NUM_LAYER];
+    double* layerBias[NUM_LAYER];
+    ifstream file ("layer0", ios::in|ios::binary|ios::ate);
+    int size = file.tellg();
+    char* memblock = new char [size];
+    file.seekg (0, ios::beg);
+    file.read (memblock, size);
+    file.close();
 
-}
+    double* layer0weights = (double*)memblock;//reinterpret as doubles
 
+    //128 * 20752
 
-
-DrapeResult drape(double* body_vertices, double* cloth_vertices, double* pose, double* trans) {
-    int batch_size = 1;
-    
-
-}
-
-// 이건 필요없다. 이미 A pose에서 구한것을 가져오면 되니까 미리 계산해두고 Unreal에 넘겨주는 방식을 택했다.
-double* get_lbs_weights(double* body_vertices, double* cloth_vertices, double* body_lbs_weights, int K=10) {
-
-}
-
-double* set_pose(double[] can_vertes, pose, trans, lbs_weight) {
-        /*
-        *** INPUT ***
-            can_verts: [batch_size, N_V, 3]
-            pose: [batch_size, 63]
-        */
-
-    int N_V = 
-    int N_K = 55
-    reshape비슷한것을 해야함
-    global_orient
-    pose;
-    double* riggedJaw = jaw_pose.reshape;
-    double* riggedLeftEye = leye_pose.reshape;
-    double* riggedRightEye = reye_pose.reshape
-    double* riggedLeftHand = einsum(leftHand_pose, left_hand_Component);
-    double* riggedRightHand = einsum(rightHand_pose, right_hand_component);
-
-
-    can_pose
-}
-
-// n*m matrix가 들어왔을때 col별로 더한 matrix return
-double* einsum(double* matrixA, double* matrixB, int p, int q, int r) {
-    // matrixC는 matrixA와 matrixB의 multiplication을, 
-    // matrixA: [p][q]
-    // matrixB: [q][r]
-    // matrixC: [p][r]
-    // matrixD: [r]
-
-    // matrixD는 matrixC의 column-wise summation을 담는다.
-
-    double* matrixC = matmul(matrixA, matrixB, p, q, r);
-    double* matrixD;
-
-    for (int col=0; col<m; col++) {
-        int sum = 0;
-        for (int row=0; row<n; row++) {
-            sum += matrixC[row*m + col];
-        }
-        matrixD[col] = sum;
+    double input[20752] = {1};
+    double output[128];
+    matmul(layer0weights, input, output, 128, 20752);
+    for (int i=0; i< 129; i++) {
+        cout<<output[i]<<" ";
     }
-    return matrixC
 }
 
-double* matmul(double* matrixA, double* matrixB, int p, int q, int r) {
-    double* matrixC;
-    for (int i = 0; i < p; i++)
-      for (int j = 0; j < r; j++)
-        for (int k = 0; k < q; k++)
-            matrixC[i * p + j] += matrixA[i * p + k] * matrixB[k * q + j];
+void matmul(double* matrixA, double* matrixB, double* matrixC, int numARow, int numACol) {
+    for (int row=0; row < numARow; row++) {
+        double sum = 0.0;
+        for (int k=0; k<numACol; k++) {
+            sum += matrixA[row * numACol + k] * matrixB[k];
+        }
+        matrixC[row] = sum;
+    }
+}
+
+void addBias(double* matrix, double* bias, int count) {
+    for (int i=0; i<count; i++) {
+        matrix[i] += bias[i];
+    }
 }
