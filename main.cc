@@ -3,45 +3,59 @@
 #include <algorithm>
 #include <vector>
 #include <iostream>
+#include <string>
 #include <cstring>
 using namespace std;
 
-void matmul(double* matrixA, double* matrixB, double* matrixC, int numARow, int numACol);
+void readFileToBuffer(string filename, double** buffer, int index);
+void forward(double* weight, double* input, double* output, int numRow, int numCol);
 void addBias(double* matrix, double* bias, int count);
-int readFileToBuffer(char* filename, double* buffer);
 
 #define NUM_LAYER 4
 
 int main() {
-
     double* layerWeights[NUM_LAYER];
     double* layerBias[NUM_LAYER];
-    ifstream file ("layer0", ios::in|ios::binary|ios::ate);
+    for (int layer=0; layer < NUM_LAYER; layer++) {
+        string weightFilename = "layer" + to_string(layer) + "weights";
+        string biasFilename= "layer" + to_string(layer) + "bias";
+        readFileToBuffer(weightFilename, layerWeights, layer);
+        readFileToBuffer(biasFilename, layerBias, layer);
+    }
+
+    int dimensions[5] = {20752, 128, 64, 128, 5283}; // TO_BE_CHANGED
+
+    double input[20752] = {1}; // TO_BE_CHANGED
+    double output[20752];
+
+    // UnrealEngine ParallelFor 
+    for (int layer=0; layer < NUM_LAYER; layer++) {
+        forward(layerWeights[layer], input, output, dimensions[layer+1], dimensions[layer]);
+        addBias(output, layerBias[layer], dimensions[layer+1]);
+        memcpy(input, output, 20752*4);
+    }
+    for (int i=0; i< 5283; i++) {
+        cout<<output[i]<<" ";
+    }
+}
+
+void readFileToBuffer(string filename, double** buffer, int index) {
+    ifstream file (filename, ios::in|ios::binary|ios::ate);
     int size = file.tellg();
     char* memblock = new char [size];
     file.seekg (0, ios::beg);
     file.read (memblock, size);
     file.close();
-
-    double* layer0weights = (double*)memblock;//reinterpret as doubles
-
-    //128 * 20752
-
-    double input[20752] = {1};
-    double output[128];
-    matmul(layer0weights, input, output, 128, 20752);
-    for (int i=0; i< 129; i++) {
-        cout<<output[i]<<" ";
-    }
+    buffer[index] = (double*)memblock;
 }
 
-void matmul(double* matrixA, double* matrixB, double* matrixC, int numARow, int numACol) {
-    for (int row=0; row < numARow; row++) {
+void forward(double* weight, double* input, double* output, int numRow, int numCol) {
+    for (int row=0; row < numRow; row++) {
         double sum = 0.0;
-        for (int k=0; k<numACol; k++) {
-            sum += matrixA[row * numACol + k] * matrixB[k];
+        for (int k=0; k<numCol; k++) {
+            sum += weight[row * numCol + k] * input[k];
         }
-        matrixC[row] = sum;
+        output[row] = sum;
     }
 }
 
