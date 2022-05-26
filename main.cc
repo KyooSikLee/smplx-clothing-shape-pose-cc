@@ -11,6 +11,7 @@ using namespace std;
 void readFileToBuffer(const char* filename, double** buffer, int index);
 void forward(double* weight, double* input, double* output, int numRow, int numCol);
 void addBias(double* matrix, double* bias, int count);
+void relu(double* matrix, int count);
 
 #define NUM_LAYER 4
 
@@ -36,6 +37,9 @@ int main() {
     for (int layer=0; layer < NUM_LAYER; layer++) {
         forward(layerWeights[layer], input, output, dimensions[layer+1], dimensions[layer]);
         addBias(output, layerBias[layer], dimensions[layer+1]);
+        if (layer != NUM_LAYER -1) {
+            relu(output, dimensions[layer+1]);
+        }
         memcpy(input, output, 20752*sizeof(double));
     }
     for (int i=0; i< 5283; i++) {
@@ -68,5 +72,13 @@ void forward(double* weight, double* input, double* output, int numRow, int numC
 void addBias(double* matrix, double* bias, int count) {
     for (int i=0; i<count; i++) {
         matrix[i] += bias[i];
+    }
+}
+
+void relu(double* matrix, int count) {
+    for (int i=0; i<count; i++) {
+        if (matrix[i] < 0) {
+            matrix[i] = 0;
+        }
     }
 }
