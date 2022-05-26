@@ -8,7 +8,7 @@
 
 using namespace std;
 
-void readFileToBuffer(string filename, double** buffer, int index);
+void readFileToBuffer(const char* filename, double** buffer, int index);
 void forward(double* weight, double* input, double* output, int numRow, int numCol);
 void addBias(double* matrix, double* bias, int count);
 
@@ -20,8 +20,8 @@ int main() {
     for (int layer=0; layer < NUM_LAYER; layer++) {
         string weightFilename = "layer" + to_string(layer) + "weights";
         string biasFilename= "layer" + to_string(layer) + "bias";
-        readFileToBuffer(weightFilename, layerWeights, layer);
-        readFileToBuffer(biasFilename, layerBias, layer);
+        readFileToBuffer(weightFilename.c_str(), layerWeights, layer);
+        readFileToBuffer(biasFilename.c_str(), layerBias, layer);
     }
     cout.precision(20);
 
@@ -45,7 +45,7 @@ int main() {
     }
 }
 
-void readFileToBuffer(string filename, double** buffer, int index) {
+void readFileToBuffer(const char* filename, double** buffer, int index) {
     ifstream file (filename, ios::in|ios::binary|ios::ate);
     int size = file.tellg();
     char* memblock = new char [size];
