@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+
 using namespace std;
 
 void readFileToBuffer(string filename, double** buffer, int index);
@@ -22,20 +23,25 @@ int main() {
         readFileToBuffer(weightFilename, layerWeights, layer);
         readFileToBuffer(biasFilename, layerBias, layer);
     }
+    cout.precision(20);
 
     int dimensions[5] = {20752, 128, 64, 128, 5283}; // TO_BE_CHANGED
 
-    double input[20752] = {1}; // TO_BE_CHANGED
+    double input[20752]; // TO_BE_CHANGED
     double output[20752];
+    fill_n(input, 20752, 0);
+    fill_n(output, 20752, 0);
 
     // UnrealEngine ParallelFor 
     for (int layer=0; layer < NUM_LAYER; layer++) {
         forward(layerWeights[layer], input, output, dimensions[layer+1], dimensions[layer]);
         addBias(output, layerBias[layer], dimensions[layer+1]);
-        memcpy(input, output, 20752*4);
+        memcpy(input, output, 20752*sizeof(double));
     }
     for (int i=0; i< 5283; i++) {
+        if (i %3 ==0) cout<<"v ";
         cout<<output[i]<<" ";
+        if (i %3 == 2) cout<<endl;
     }
 }
 
